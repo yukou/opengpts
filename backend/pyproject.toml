@@ -12,7 +12,6 @@ sse-starlette = "^1.6.5"
 tomli-w = "^1.0.0"
 uvicorn = "^0.23.2"
 fastapi = "^0.103.2"
-langserve = "0.0.32"
 # Uncomment if you need to work from a development branch
 # This will only work for local development though!
 # langchain = { git = "git@github.com:langchain-ai/langchain.git/", branch = "nc/subclass-runnable-binding" , subdirectory = "libs/langchain"}
@@ -20,7 +19,7 @@ orjson = "^3.9.10"
 python-multipart = "^0.0.6"
 tiktoken = "^0.5.1"
 langchain = ">=0.0.338"
-langgraph = "^0.0.38"
+langgraph = "^0.0.39"
 pydantic = "<2.0"
 python-magic = "^0.4.27"
 langchain-openai = "^0.1.3"

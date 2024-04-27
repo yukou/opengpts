@@ -4,12 +4,18 @@ from contextlib import asynccontextmanager
 import asyncpg
 import orjson
 from fastapi import FastAPI
+from app.langserve.client import LangServeClient, get_client
 
 _pg_pool = None
+_langserve = None
 
 
 def get_pg_pool() -> asyncpg.pool.Pool:
     return _pg_pool
+
+
+def get_langserve() -> LangServeClient:
+    return _langserve
 
 
 async def _init_connection(conn) -> None:
@@ -26,7 +32,7 @@ async def _init_connection(conn) -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global _pg_pool
+    global _pg_pool, _langserve
 
     _pg_pool = await asyncpg.create_pool(
         database=os.environ["POSTGRES_DB"],
@@ -36,6 +42,9 @@ async def lifespan(app: FastAPI):
         port=os.environ["POSTGRES_PORT"],
         init=_init_connection,
     )
+    _langserve = get_client(url=os.environ["LANGSERVE_URL"])
     yield
     await _pg_pool.close()
+    await _langserve.http.client.aclose()
     _pg_pool = None
+    _langserve = None
