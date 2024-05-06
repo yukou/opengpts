@@ -29,6 +29,7 @@ from app.tools import (
     ActionServer,
     Arxiv,
     AvailableTools,
+    CodeInterpreter,
     Connery,
     DallE,
     DDGSearch,
@@ -58,6 +59,7 @@ Tool = Union[
     TavilyAnswer,
     Retrieval,
     DallE,
+    CodeInterpreter,
 ]
 
 

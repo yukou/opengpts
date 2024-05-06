@@ -3,7 +3,7 @@ from base64 import b64decode
 from enum import Enum
 from typing import Optional, Union
 
-from pydantic import BaseSettings, root_validator, validator
+from pydantic.v1 import BaseSettings, root_validator, validator
 
 
 class AuthType(Enum):

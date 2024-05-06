@@ -12,23 +12,23 @@ from app.schema import Assistant, Thread, User
 async def list_assistants(user_id: str) -> List[Assistant]:
     """List all assistants for the current user."""
     async with get_pg_pool().acquire() as conn:
-        return await conn.fetch("SELECT * FROM assistant WHERE user_id = $1", user_id)
+        return [dict(a) for a in await conn.fetch("SELECT * FROM assistant WHERE user_id = $1", user_id)]
 
 
 async def get_assistant(user_id: str, assistant_id: str) -> Optional[Assistant]:
     """Get an assistant by ID."""
     async with get_pg_pool().acquire() as conn:
-        return await conn.fetchrow(
+        return dict(await conn.fetchrow(
             "SELECT * FROM assistant WHERE assistant_id = $1 AND (user_id = $2 OR public IS true)",
             assistant_id,
             user_id,
-        )
+        ))
 
 
 async def list_public_assistants() -> List[Assistant]:
     """List all the public assistants."""
     async with get_pg_pool().acquire() as conn:
-        return await conn.fetch(("SELECT * FROM assistant WHERE public IS true;"))
+        return [dict(a) for a in await conn.fetch(("SELECT * FROM assistant WHERE public IS true;"))]
 
 
 async def put_assistant(
@@ -79,17 +79,17 @@ async def put_assistant(
 async def list_threads(user_id: str) -> List[Thread]:
     """List all threads for the current user."""
     async with get_pg_pool().acquire() as conn:
-        return await conn.fetch("SELECT * FROM thread WHERE user_id = $1", user_id)
+        return [dict(t) for t in await conn.fetch("SELECT * FROM thread WHERE user_id = $1", user_id)]
 
 
 async def get_thread(user_id: str, thread_id: str) -> Optional[Thread]:
     """Get a thread by ID."""
     async with get_pg_pool().acquire() as conn:
-        return await conn.fetchrow(
+        return dict(await conn.fetchrow(
             "SELECT * FROM thread WHERE thread_id = $1 AND user_id = $2",
             thread_id,
             user_id,
-        )
+        ))
 
 
 async def get_thread_state(*, user_id: str, thread_id: str, assistant_id: str):

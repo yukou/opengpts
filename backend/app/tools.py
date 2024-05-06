@@ -24,9 +24,12 @@ from langchain_community.utilities.tavily_search import TavilySearchAPIWrapper
 from langchain_core.tools import Tool
 from langchain_robocorp import ActionServerToolkit
 from typing_extensions import TypedDict
+from codeinterpreterapi import CodeInterpreterSession
+import asyncio
 
 from app.upload import vstore
 
+_code_interpreter_session = None
 
 class DDGInput(BaseModel):
     query: str = Field(description="search query to look up")
@@ -58,6 +61,7 @@ class AvailableTools(str, Enum):
     PUBMED = "pubmed"
     WIKIPEDIA = "wikipedia"
     DALL_E = "dall_e"
+    CODE_INTERPRETER = "code_interpreter"
 
 
 class ToolConfig(TypedDict):
@@ -198,6 +202,14 @@ class DallE(BaseTool):
         const=True,
     )
 
+class CodeInterpreter(BaseTool):
+    type: AvailableTools = Field(AvailableTools.CODE_INTERPRETER, const=True)
+    name: str = Field("Code Interpreter", const=True)
+    description: str = Field(
+        "Execute python code.",
+        const=True,
+    )
+
 
 RETRIEVAL_DESCRIPTION = """Can be used to look up information that was uploaded to this assistant.
 If the user is referencing particular files, that is often a good hint that information may be here.
@@ -208,6 +220,12 @@ def get_retriever(assistant_id: str, thread_id: str):
     return vstore.as_retriever(
         search_kwargs={"filter": {"namespace": {"$in": [assistant_id, thread_id]}}}
     )
+
+def get_code_interpreter():
+    global _code_interpreter_session
+    if _code_interpreter_session is None:
+        _code_interpreter_session = CodeInterpreterSession()
+    return _code_interpreter_session
 
 
 @lru_cache(maxsize=5)
@@ -308,6 +326,10 @@ def _get_dalle_tools():
         "A wrapper around OpenAI DALL-E API. Useful for when you need to generate images from a text description. Input should be an image description.",
     )
 
+@lru_cache(maxsize=5)
+def _get_code_interpreter_tool():
+    return get_code_interpreter()._tools([])[-1]
+
 
 TOOLS = {
     AvailableTools.ACTION_SERVER: _get_action_server,
@@ -322,4 +344,5 @@ TOOLS = {
     AvailableTools.WIKIPEDIA: _get_wikipedia,
     AvailableTools.TAVILY_ANSWER: _get_tavily_answer,
     AvailableTools.DALL_E: _get_dalle_tools,
+    AvailableTools.CODE_INTERPRETER: _get_code_interpreter_tool,
 }

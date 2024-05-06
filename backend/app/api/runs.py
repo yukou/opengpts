@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, Sequence, Union
+from typing import Any, Dict, List, Optional, Sequence, Union
 
 import langsmith.client
 from fastapi import APIRouter, BackgroundTasks, HTTPException
@@ -11,10 +11,11 @@ from langsmith.utils import tracing_is_enabled
 from pydantic import BaseModel, Field
 from sse_starlette import EventSourceResponse
 
-from app.agent import agent
+from app.agent import agent, AvailableTools
 from app.auth.handlers import AuthedUser
 from app.storage import get_assistant, get_thread
 from app.stream import astream_state, to_sse
+from app.tools import get_code_interpreter
 
 router = APIRouter()
 
@@ -23,7 +24,8 @@ class CreateRunPayload(BaseModel):
     """Payload for creating a run."""
 
     thread_id: str
-    input: Optional[Union[Sequence[AnyMessage], Dict[str, Any]]] = Field(
+    # input: Optional[Union[Sequence[AnyMessage], Dict[str, Any]]] = Field(
+    input: Optional[List[Dict[str, Any]]] = Field(
         default_factory=dict
     )
     config: Optional[RunnableConfig] = None
@@ -54,6 +56,12 @@ async def _run_input_and_config(payload: CreateRunPayload, user_id: str):
             agent.get_input_schema(config).validate(payload.input)
     except ValidationError as e:
         raise RequestValidationError(e.errors(), body=payload)
+
+    print(assistant["config"]["configurable"]["type==agent/tools"])
+    # Start CodeInterpreter
+    for t in assistant["config"]["configurable"]["type==agent/tools"]:
+        if t["type"] == AvailableTools.CODE_INTERPRETER:
+            await get_code_interpreter().astart()
 
     return payload.input, config
 
